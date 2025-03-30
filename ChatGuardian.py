@@ -6,11 +6,17 @@ import random
 from functools import wraps
 import logging
 from datetime import datetime, timedelta, UTC
+from flask import Flask
+import threading
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.ERROR)
 logger = logging.getLogger(__name__)
-
 TOKEN = '7680787360:AAGn3IkylYRN5xewaud-cfykEvRdz7L66oI'
+app = Flask(__name__)
+
+@app.route('/')
+def health_check():
+    return "ChatGuardian Bot is running!", 200
 
 def init_db():
     with sqlite3.connect('bot.db') as conn:
@@ -308,17 +314,23 @@ async def error_handler(update: object, context):
     logger.error("Exception:", exc_info=context.error)
     if update and hasattr(update, 'message'): await update.message.reply_text('⚠️ Помилка')
 
-def main():
-    app = Application.builder().token(TOKEN).build()
-    app.add_handlers([
+def run_bot():
+    bot_app = Application.builder().token(TOKEN).build()
+    bot_app.add_handlers([
         CommandHandler('start', cmd_start), CommandHandler('help', cmd_help), CommandHandler('rules', cmd_rules),
         CommandHandler('setrules', cmd_setrules), CommandHandler('setwelcome', cmd_setwelcome), CommandHandler('joke', cmd_joke),
         CommandHandler('warn', cmd_warn), CommandHandler('ban', cmd_ban), CommandHandler('kick', cmd_kick), CommandHandler('mute', cmd_mute),
         CommandHandler('unmute', cmd_unmute), CommandHandler('unban', cmd_unban), CommandHandler('unwarn', cmd_unwarn),
         MessageHandler(filters.StatusUpdate.NEW_CHAT_MEMBERS, welcome_message), MessageHandler(filters.TEXT & ~filters.COMMAND, handle_text)
     ])
-    app.add_error_handler(error_handler)
-    app.run_polling()
+    bot_app.add_error_handler(error_handler)
+    bot_app.run_polling()
+
+def run_flask():
+    port = int(os.getenv("PORT", 5000))
+    app.run(host='0.0.0.0', port=port)
 
 if __name__ == '__main__':
-    main()
+    flask_thread = threading.Thread(target=run_flask)
+    flask_thread.start()
+    run_bot()
