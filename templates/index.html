@@ -1,1 +1,194 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Цикир | Документація</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+    <!-- Бічна панель -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <h1>Цикир</h1>
+            <p>Документація</p>
+            <div class="theme-toggle">
+                <i class="fas fa-moon"></i>
+            </div>
+        </div>
+        <div class="search">
+            <input type="text" id="search" placeholder="Пошук команд...">
+        </div>
+        <nav>
+            <ul>
+                <li><a href="#intro">Вступ</a></li>
+                <li><a href="#commands">Команди</a></li>
+                <li><a href="#status">Статус</a></li>
+                <li><a href="#support">Підтримка</a></li>
+            </ul>
+        </nav>
+    </aside>
 
+    <!-- Основний вміст -->
+    <main>
+        <!-- Вступ -->
+        <section id="intro" class="section">
+            <div class="container">
+                <h1>Цикир | Чат-менеджер</h1>
+                <p>Цикир — це потужний Telegram-бот для керування чатами. Він забезпечує модерацію, налаштування правил і привітань, а також дозволяє перевірити швидкість роботи.</p>
+                <p>Додайте бота до вашого чату: <a href="https://t.me/cikir_bot" class="btn">Додати Цикир</a></p>
+            </div>
+        </section>
+
+        <!-- Команди -->
+        <section id="commands" class="section">
+            <div class="container">
+                <h1>Команди</h1>
+                <p>Ось повний список команд Цикир із описами, синонімами та прикладами. Використовуйте їх для ефективного керування вашим чатом.</p>
+
+                <h2>Основні команди</h2>
+                <div class="command">
+                    <h3><code>/start</code> <button class="copy-btn" data-code="/start"><i class="fas fa-copy"></i></button></h3>
+                    <p>Запускає бота та показує базову інформацію.</p>
+                    <pre><code>/start</code></pre>
+                </div>
+                <div class="command">
+                    <h3><code>/help</code> <button class="copy-btn" data-code="/help"><i class="fas fa-copy"></i></button></h3>
+                    <p>Показує довідку з посиланням на документацію.</p>
+                    <p><strong>Синонім:</strong> <code>допомога</code></p>
+                    <pre><code>/help</code></pre>
+                </div>
+                <div class="command">
+                    <h3><code>бот</code> <button class="copy-btn" data-code="бот"><i class="fas fa-copy"></i></button></h3>
+                    <p>Перевіряє швидкість відповіді бота.</p>
+                    <pre><code>бот</code></pre>
+                    <p><strong>Приклад відповіді:</strong> <code>🏓 Бот онлайн! Затримка: 0.35 сек</code></p>
+                </div>
+
+                <h2>Команди для користувачів</h2>
+                <div class="command">
+                    <h3><code>+нік [нікнейм]</code> <button class="copy-btn" data-code="+нік Цикир"><i class="fas fa-copy"></i></button></h3>
+                    <p>Встановлює ваш нікнейм у чаті.</p>
+                    <pre><code>+нік Цикир</code></pre>
+                </div>
+                <div class="command">
+                    <h3><code>-нік</code> <button class="copy-btn" data-code="-нік"><i class="fas fa-copy"></i></button></h3>
+                    <p>Видаляє ваш нікнейм у чаті.</p>
+                    <pre><code>-нік</code></pre>
+                </div>
+                <div class="command">
+                    <h3><code>нік</code> <button class="copy-btn" data-code="нік"><i class="fas fa-copy"></i></button></h3>
+                    <p>Показує ваш поточний нікнейм.</p>
+                    <pre><code>нік</code></pre>
+                </div>
+
+                <h2>Команди для адміністраторів</h2>
+                <p><strong>Примітка:</strong> Ці команди застосовуються у відповідь на повідомлення користувача.</p>
+                <div class="command">
+                    <h3><code>/warn [причина]</code> <button class="copy-btn" data-code="/warn Спам"><i class="fas fa-copy"></i></button></h3>
+                    <p>Видає попередження. 3 попередження = бан.</p>
+                    <p><strong>Синонім:</strong> <code>варн</code></p>
+                    <pre><code>/warn Спам</code></pre>
+                </div>
+                <div class="command">
+                    <h3><code>/unwarn</code> <button class="copy-btn" data-code="/unwarn"><i class="fas fa-copy"></i></button></h3>
+                    <p>Знімає одне попередження.</p>
+                    <p><strong>Синоніми:</strong> <code>-варн</code>, <code>анварн</code>, <code>унварн</code></p>
+                    <pre><code>/unwarn</code></pre>
+                </div>
+                <div class="command">
+                    <h3><code>/ban [причина]</code> <button class="copy-btn" data-code="/ban Порушення"><i class="fas fa-copy"></i></button></h3>
+                    <p>Блокує користувача назавжди (з можливістю розбану).</p>
+                    <p><strong>Синонім:</strong> <code>бан</code></p>
+                    <pre><code>/ban Порушення</code></pre>
+                </div>
+                <div class="command">
+                    <h3><code>/unban</code> <button class="copy-btn" data-code="/unban"><i class="fas fa-copy"></i></button></h3>
+                    <p>Розблоковує користувача.</p>
+                    <p><strong>Синоніми:</strong> <code>-бан</code>, <code>анбан</code>, <code>унбан</code></p>
+                    <pre><code>/unban</code></pre>
+                </div>
+                <div class="command">
+                    <h3><code>/kick [причина]</code> <button class="copy-btn" data-code="/kick Флуд"><i class="fas fa-copy"></i></button></h3>
+                    <p>Видаляє користувача без блокування.</p>
+                    <p><strong>Синонім:</strong> <code>кік</code></p>
+                    <pre><code>/kick Флуд</code></pre>
+                </div>
+                <div class="command">
+                    <h3><code>/mute [час] [причина]</code> <button class="copy-btn" data-code="/mute 30хв Спам"><i class="fas fa-copy"></i></button></h3>
+                    <p>Обмежує користувача в написанні на вказаний час.</p>
+                    <p><strong>Синонім:</strong> <code>мут</code></p>
+                    <pre><code>/mute 30хв Спам</code></pre>
+                </div>
+                <div class="command">
+                    <h3><code>/unmute</code> <button class="copy-btn" data-code="/unmute"><i class="fas fa-copy"></i></button></h3>
+                    <p>Знімає обмеження на написання.</p>
+                    <p><strong>Синоніми:</strong> <code>анмут</code>, <code>унмут</code></p>
+                    <pre><code>/unmute</code></pre>
+                </div>
+
+                <h2>Налаштування чату</h2>
+                <div class="command">
+                    <h3><code>/setrules [текст]</code> <button class="copy-btn" data-code="/setrules Заборонено спамити!"><i class="fas fa-copy"></i></button></h3>
+                    <p>Встановлює правила чату.</p>
+                    <p><strong>Синонім:</strong> <code>+правила</code></p>
+                    <pre><code>/setrules Заборонено спамити!</code></pre>
+                </div>
+                <div class="command">
+                    <h3><code>/rules</code> <button class="copy-btn" data-code="/rules"><i class="fas fa-copy"></i></button></h3>
+                    <p>Показує встановлені правила.</p>
+                    <p><strong>Синонім:</strong> <code>правила</code></p>
+                    <pre><code>/rules</code></pre>
+                </div>
+                <div class="command">
+                    <h3><code>/setwelcome [текст]</code> <button class="copy-btn" data-code="/setwelcome Ласкаво просимо, {name}!"><i class="fas fa-copy"></i></button></h3>
+                    <p>Встановлює привітання для нових учасників. {name} — ім’я користувача.</p>
+                    <p><strong>Синонім:</strong> <code>+привітання</code></p>
+                    <pre><code>/setwelcome Ласкаво просимо, {name}!</code></pre>
+                </div>
+                <div class="command">
+                    <h3><code>-привітання</code> <button class="copy-btn" data-code="-привітання"><i class="fas fa-copy"></i></button></h3>
+                    <p>Видаляє привітальне повідомлення.</p>
+                    <pre><code>-привітання</code></pre>
+                </div>
+                <div class="command">
+                    <h3><code>вітання</code> <button class="copy-btn" data-code="вітання"><i class="fas fa-copy"></i></button></h3>
+                    <p>Показує поточне привітання.</p>
+                    <p><strong>Синонім:</strong> <code>привітайся</code></p>
+                    <pre><code>вітання</code></pre>
+                </div>
+
+                <h2>Використання команд керування</h2>
+                <p>Щоб застосувати команди модерації (<code>/warn</code>, <code>/ban</code>, <code>/kick</code>, <code>/mute</code>, <code>/unmute</code>, <code>/unban</code>, <code>/unwarn</code>):</p>
+                <ol>
+                    <li>Відповісти на повідомлення користувача.</li>
+                    <li>Ввести команду з необов’язковою причиною.</li>
+                </ol>
+                <p><strong>Приклад:</strong> Відповідь на повідомлення + <code>/ban Спам</code> — бан із причиною "Спам".</p>
+            </div>
+        </section>
+
+        <!-- Статус -->
+        <section id="status" class="section">
+            <div class="container">
+                <h1>Статус бота</h1>
+                <p>Перевірте, чи Цикир онлайн у реальному часі.</p>
+                <p id="status-text">Перевіряємо...</p>
+            </div>
+        </section>
+
+        <!-- Підтримка -->
+        <section id="support" class="section">
+            <div class="container">
+                <h1>Підтримка</h1>
+                <p>З питань чи пропозицій звертайтесь до нашого агента:</p>
+                <p><a href="tg://user?id=123456789">@mr_hetsker2</a></p>
+            </div>
+        </section>
+    </main>
+
+    <script src="/static/script.js"></script>
+</body>
+</html>
