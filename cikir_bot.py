@@ -12,7 +12,6 @@ import os
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.ERROR)
 logger = logging.getLogger(__name__)
-TOKEN = '7424478954:AAEnWzgyf9wrDHjVWeBCqZqnMS0MiRuhlQQ'
 app = Flask(__name__)
 
 @app.route('/')
