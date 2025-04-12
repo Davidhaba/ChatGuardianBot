@@ -26,7 +26,7 @@ def home():
     return render_template('index.html')
 
 def init_db():
-    with sqlite3.connect('bot.db') as conn:
+    with sqlite3.connect('cikir_bot.db') as conn:
         c = conn.cursor()
         c.execute('CREATE TABLE IF NOT EXISTS warnings (user_id INTEGER, chat_id INTEGER, count INTEGER DEFAULT 0, PRIMARY KEY (user_id, chat_id))')
         c.execute('CREATE TABLE IF NOT EXISTS rules (chat_id INTEGER PRIMARY KEY, rules_text TEXT NOT NULL)')
