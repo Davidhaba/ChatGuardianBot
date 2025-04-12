@@ -12,7 +12,13 @@ import os
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.ERROR)
 logger = logging.getLogger(__name__)
-TOKEN = os.getenv('BOT_TOKEN')
+
+try:
+    from BOT_TOKEN import BOT_TOKEN
+except ImportError:
+    BOT_TOKEN = os.getenv("BOT_TOKEN")
+TOKEN = BOT_TOKEN
+
 app = Flask(__name__)
 
 @app.route('/')
