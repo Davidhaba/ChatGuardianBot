@@ -1,6 +1,6 @@
 import sqlite3
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
+from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes, CallbackQueryHandler
 from telegram.error import BadRequest
 import random
 from functools import wraps
@@ -20,7 +20,7 @@ def home():
     return render_template('index.html')
 
 def init_db():
-    with sqlite3.connect('cikir_bot.db') as conn:
+    with sqlite3.connect('bot.db') as conn:
         c = conn.cursor()
         c.execute('CREATE TABLE IF NOT EXISTS warnings (user_id INTEGER, chat_id INTEGER, count INTEGER DEFAULT 0, PRIMARY KEY (user_id, chat_id))')
         c.execute('CREATE TABLE IF NOT EXISTS rules (chat_id INTEGER PRIMARY KEY, rules_text TEXT NOT NULL)')
@@ -29,6 +29,8 @@ def init_db():
         c.execute('''CREATE TABLE IF NOT EXISTS cikirkas 
                      (user_id INTEGER PRIMARY KEY, cikirkas INTEGER DEFAULT 0, last_try TIMESTAMP, 
                       cooldown_reduction INTEGER DEFAULT 0, success_boost INTEGER DEFAULT 0, bonus INTEGER DEFAULT 0)''')
+        c.execute('''CREATE TABLE IF NOT EXISTS messages 
+             (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, chat_id INTEGER, timestamp TIMESTAMP)''')
         conn.commit()
 
 init_db()
@@ -58,10 +60,29 @@ def admin_only(func):
             return await func(update, context)
     return wrapper
 
+def rate_limit(func):
+    @wraps(func)
+    async def wrapper(update: Update, context):
+        user_id = update.message.from_user.id
+        now = datetime.now(UTC).timestamp()
+        if user_id not in context.bot_data:
+            context.bot_data[user_id] = {'last_command_time': 0}
+        last_command_time = context.bot_data[user_id]['last_command_time']
+        if now - last_command_time < 1:
+            try:
+                await context.bot.delete_message(chat_id=update.message.chat.id, message_id=update.message.message_id)
+            except BadRequest as e:
+                logger.error(f"Не вдалося видалити повідомлення: {e}")
+            return
+        context.bot_data[user_id]['last_command_time'] = now
+        return await func(update, context)
+    return wrapper
+
 @safe_message
 async def cmd_start(update: Update, context): 
     if update.message.chat.type == 'private': await update.message.reply_text('🔹 Привіт! Я бот для чату. /help - допомога')
 
+@rate_limit
 @safe_message
 async def cmd_help(update: Update, context): 
     support_link = await get_user_link(await context.bot.get_chat("5046805682"))
@@ -81,12 +102,14 @@ async def cmd_bot(update: Update, context):
     delay = (response_time - received_time).total_seconds()
     await update.message.reply_text(f"🧑‍💻 Бот онлайн!\n🏓 Затримка: {delay:.2f}с.")
 
+@rate_limit
 @safe_message
 @with_db
 async def cmd_rules(update: Update, context, cursor): 
     cursor.execute('SELECT rules_text FROM rules WHERE chat_id = ?', (update.message.chat.id,))
     await update.message.reply_text(f'📜 Правила:\n{cursor.fetchone()[0]}' if cursor.fetchone() else '❌ Правила не встановлені')
 
+@rate_limit
 @admin_only
 @with_db
 async def cmd_setrules(update: Update, context, cursor): 
@@ -95,6 +118,7 @@ async def cmd_setrules(update: Update, context, cursor):
         await update.message.reply_text('✅ Правила оновлено!')
     else: await update.message.reply_text('ℹ️ Вкажіть текст правил')
 
+@rate_limit
 @admin_only
 @with_db
 async def cmd_setwelcome(update: Update, context, cursor): 
@@ -121,6 +145,7 @@ async def welcome_message(update: Update, context):
         for member in update.message.new_chat_members:
             await update.message.reply_text(msg.replace('{name}', await get_user_link(member, update.message.chat.id)), parse_mode='MarkdownV2', disable_web_page_preview=True)
 
+@rate_limit
 @safe_message
 @with_db
 async def cmd_set_nickname(update: Update, context, cursor):
@@ -134,6 +159,7 @@ async def cmd_set_nickname(update: Update, context, cursor):
     cursor.connection.commit()
     await update.message.reply_text(f'✅ Нікнейм встановлено!')
 
+@rate_limit
 @safe_message
 @with_db
 async def cmd_remove_nickname(update: Update, context, cursor):
@@ -143,6 +169,7 @@ async def cmd_remove_nickname(update: Update, context, cursor):
     cursor.connection.commit()
     await update.message.reply_text('✅ Нікнейм видалено!' if cursor.rowcount > 0 else 'ℹ️ Нікнейм не був встановлений')
 
+@rate_limit
 @safe_message
 @with_db
 async def cmd_show_nickname(update: Update, context, cursor):
@@ -166,12 +193,14 @@ async def get_user_link(member, chat_id=None):
     name = ''.join(f'\\{c}' if c in '_*[]()~`>#+-=|{{}}.!' else c for c in name)
     return f"[{name}](https://t.me/{member.username})" if member.username else f"[{name}](tg://user?id={member.id})"
 
+@rate_limit
 @admin_only
 @with_db
 async def cmd_remove_welcome(update: Update, context, cursor): 
     cursor.execute('DELETE FROM welcome WHERE chat_id = ?', (update.message.chat.id,)); cursor.connection.commit()
     await update.message.reply_text('✅ Привітання видалено!' if cursor.rowcount > 0 else 'ℹ️ Привітання не було встановлено.')
 
+@rate_limit
 @admin_only
 @with_db
 async def cmd_warn(update: Update, context, cursor):
@@ -190,6 +219,7 @@ async def cmd_warn(update: Update, context, cursor):
                 cursor.execute('UPDATE warnings SET count = 0 WHERE user_id = ? AND chat_id = ?', (target_id, chat_id)); cursor.connection.commit()
             except BadRequest as e: await handle_errors(update, e)
 
+@rate_limit
 @admin_only
 async def cmd_ban(update: Update, context):
     target_id, reason = await parse_target(update, context)
@@ -200,6 +230,7 @@ async def cmd_ban(update: Update, context):
             await update.message.reply_text(f"🚫 {target_link} заблоковано\\!\nПричина: {reason}\nМодератор: {mod_link}", parse_mode='MarkdownV2', disable_web_page_preview=True)
         except BadRequest as e: await handle_errors(update, e)
 
+@rate_limit
 @admin_only
 async def cmd_kick(update: Update, context):
     target_id, reason = await parse_target(update, context)
@@ -219,6 +250,7 @@ async def unmute_callback(context: ContextTypes.DEFAULT_TYPE):
     await context.bot.restrict_chat_member(chat_id=chat_id, user_id=user_id, permissions={"can_send_messages": True})
     await context.bot.send_message(chat_id=chat_id, text=f"🔊 {target_link} знову може писати\\!", parse_mode='MarkdownV2', disable_web_page_preview=True)
 
+@rate_limit
 @admin_only
 async def cmd_mute(update: Update, context):
     target_id, args = await parse_target(update, context, True)
@@ -233,6 +265,7 @@ async def cmd_mute(update: Update, context):
             context.job_queue.run_once(unmute_callback, duration, data=(chat_id, target_id), name=f"unmute_{chat_id}_{target_id}")
         except BadRequest as e: await handle_errors(update, e)
 
+@rate_limit
 @admin_only
 async def cmd_unmute(update: Update, context):
     target_id, reason = await parse_target(update, context)
@@ -247,6 +280,7 @@ async def cmd_unmute(update: Update, context):
                 job.schedule_removal()
         except BadRequest as e: await handle_errors(update, e)
 
+@rate_limit
 @admin_only
 async def cmd_unban(update: Update, context):
     target_id, reason = await parse_target(update, context)
@@ -258,6 +292,7 @@ async def cmd_unban(update: Update, context):
             await update.message.reply_text(f"✅ {target_link} розблоковано\\!\nМодератор: {mod_link}", parse_mode='MarkdownV2', disable_web_page_preview=True)
         except BadRequest as e: await handle_errors(update, e)
 
+@rate_limit
 @admin_only
 @with_db
 async def cmd_unwarn(update: Update, context, cursor):
@@ -268,6 +303,7 @@ async def cmd_unwarn(update: Update, context, cursor):
         count = cursor.execute('SELECT count FROM warnings WHERE user_id = ? AND chat_id = ?', (target_id, chat_id)).fetchone()[0] if cursor.rowcount > 0 else 0
         await update.message.reply_text(f"✅ Попередження знято з {target_id}\nЗагалом: {count}/3" if cursor.rowcount > 0 else "ℹ️ Немає попереджень")
 
+@rate_limit
 @safe_message
 @with_db
 async def cmd_try(update: Update, context, cursor):
@@ -316,6 +352,7 @@ async def cmd_try(update: Update, context, cursor):
     else:
         await update.message.reply_text("😔 Нічого не випало. Спробуйте ще раз пізніше!")
 
+@rate_limit
 @safe_message
 @with_db
 async def cmd_cikirkas(update: Update, context, cursor):
@@ -333,6 +370,7 @@ async def cmd_cikirkas(update: Update, context, cursor):
         f"🎁 Бонус: +{bonus} цикирок за успіх"
     )
 
+@rate_limit
 @safe_message
 @with_db
 async def cmd_shop(update: Update, context, cursor):
@@ -346,10 +384,54 @@ async def cmd_shop(update: Update, context, cursor):
         f"1. Скорочення часу (50 цикирок) - Зменшує очікування на 1 хв (зараз: {current_cooldown // 60} хв, мін. 30)\n"
         f"2. Шанс успіху (75 цикирок) - +2% до шансу нагороди (зараз: {50 + success_boost}%, макс. 80%)\n"
         f"3. Бонус (100 цикирок) - +1 цикирка за успіх (зараз: +{bonus})\n\n"
-        "Використовуйте /buy [назва] для покупки."
+        "Оберіть покращення:"
     )
-    await update.message.reply_text(shop_text)
+    keyboard = [
+        [InlineKeyboardButton("Скорочення часу", callback_data="buy_cooldown")],
+        [InlineKeyboardButton("Шанс успіху", callback_data="buy_success")],
+        [InlineKeyboardButton("Бонус", callback_data="buy_bonus")]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    await update.message.reply_text(shop_text, reply_markup=reply_markup)
 
+async def buy_upgrade(user_id, item, cursor, context, chat_id, message_id=None):
+    cursor.execute("SELECT cikirkas, cooldown_reduction, success_boost, bonus FROM cikirkas WHERE user_id = ?", (user_id,))
+    result = cursor.fetchone()
+    balance = result[0] if result else 0
+    cooldown_reduction, success_boost, bonus = result[1:] if result else (0, 0, 0)
+
+    upgrades = {
+        "скорочення": {"cost": 50, "field": "cooldown_reduction", "max": (3600 - 1800) // 60, "current": cooldown_reduction, "name": "скорочення"},
+        "шанс": {"cost": 75, "field": "success_boost", "max": 30, "current": success_boost, "name": "шанс"},
+        "бонус": {"cost": 100, "field": "bonus", "max": None, "current": bonus, "name": "бонус"},
+        "buy_cooldown": {"cost": 50, "field": "cooldown_reduction", "max": (3600 - 1800) // 60, "current": cooldown_reduction, "name": "скорочення"},
+        "buy_success": {"cost": 75, "field": "success_boost", "max": 30, "current": success_boost, "name": "шанс"},
+        "buy_bonus": {"cost": 100, "field": "bonus", "max": None, "current": bonus, "name": "бонус"}
+    }
+
+    if item not in upgrades:
+        response = "❌ Такого покращення немає. Перегляньте /shop."
+    else:
+        upgrade = upgrades[item]
+        if upgrade["max"] is not None and upgrade["current"] >= upgrade["max"]:
+            response = f"❌ Ви досягли максимуму для '{upgrade['name']}'!"
+        elif balance < upgrade["cost"]:
+            response = f"❌ Недостатньо цикирок! Потрібно: {upgrade['cost']}, у вас: {balance}"
+        else:
+            cursor.execute(f"UPDATE cikirkas SET cikirkas = cikirkas - ?, {upgrade['field']} = {upgrade['field']} + 1 WHERE user_id = ?",
+                           (upgrade["cost"], user_id))
+            if not result:
+                cursor.execute(f"INSERT INTO cikirkas (user_id, cikirkas, {upgrade['field']}) VALUES (?, ?, 1)",
+                               (user_id, -upgrade["cost"]))
+            cursor.connection.commit()
+            response = f"✅ Ви придбали '{upgrade['name']}' за {upgrade['cost']} цикирок!\nНовий баланс: {balance - upgrade['cost']} цикирок."
+
+    if message_id:
+        await context.bot.edit_message_text(response, chat_id=chat_id, message_id=message_id)
+    else:
+        await context.bot.send_message(chat_id=chat_id, text=response)
+
+@rate_limit
 @safe_message
 @with_db
 async def cmd_buy(update: Update, context, cursor):
@@ -359,37 +441,90 @@ async def cmd_buy(update: Update, context, cursor):
         return
 
     item = context.args[0].lower()
-    cursor.execute("SELECT cikirkas, cooldown_reduction, success_boost, bonus FROM cikirkas WHERE user_id = ?", (user_id,))
-    result = cursor.fetchone()
-    balance = result[0] if result else 0
-    cooldown_reduction, success_boost, bonus = result[1:] if result else (0, 0, 0)
+    await buy_upgrade(user_id, item, cursor, context, update.message.chat.id)
 
-    upgrades = {
-        "скорочення": {"cost": 50, "field": "cooldown_reduction", "max": (3600 - 1800) // 60, "current": cooldown_reduction},
-        "шанс": {"cost": 75, "field": "success_boost", "max": 30, "current": success_boost},
-        "бонус": {"cost": 100, "field": "bonus", "max": None, "current": bonus}
-    }
-
-    if item not in upgrades:
-        await update.message.reply_text("❌ Такого покращення немає. Перегляньте /shop.")
+@rate_limit
+@safe_message
+@with_db
+async def cmd_leaderboard(update: Update, context, cursor):
+    cursor.execute("SELECT user_id, cikirkas FROM cikirkas ORDER BY cikirkas DESC LIMIT 10")
+    results = cursor.fetchall()
+    if not results:
+        await update.message.reply_text("🏆 Рейтинг порожній!")
         return
+    leaderboard = "🏆 Рейтинг цикирок\\:\n\n"
+    for i, (user_id, cikirkas) in enumerate(results, 1):
+        try:
+            user = await context.bot.get_chat(user_id)
+            user_link = await get_user_link(user, update.message.chat.id)
+            leaderboard += f"{i}\\. {user_link} — \\{cikirkas} цикирок\n"
+        except BadRequest:
+            leaderboard += f"{i}\\. \\[Користувач видалений\\] — {cikirkas} цикирок\n"
+    await update.message.reply_text(leaderboard, parse_mode='MarkdownV2', disable_web_page_preview=True)
 
-    upgrade = upgrades[item]
-    if upgrade["max"] is not None and upgrade["current"] >= upgrade["max"]:
-        await update.message.reply_text(f"❌ Ви досягли максимуму для '{item}'!")
+@rate_limit
+@safe_message
+@with_db
+async def cmd_stats(update: Update, context, cursor):
+    chat_id = update.message.chat.id
+    show_all = context.args and context.args[0].lower() == 'вся'
+    title = "📊 Статистика по товариським користувачам за весь час" if show_all else "📊 Статистика по товариським користувачам за добу"
+    if show_all:
+        cursor.execute("""
+            SELECT user_id, COUNT(*) as count 
+            FROM messages 
+            WHERE chat_id = ? 
+            GROUP BY user_id 
+            ORDER BY count DESC 
+            LIMIT 10
+        """, (chat_id,))
+        results = cursor.fetchall()
+        cursor.execute("SELECT COUNT(*) FROM messages WHERE chat_id = ?", (chat_id,))
+    else:
+        since = (datetime.now(UTC) - timedelta(hours=24)).strftime('%Y-%m-%d %H:%M:%S')
+        cursor.execute("""
+            SELECT user_id, COUNT(*) as count 
+            FROM messages 
+            WHERE chat_id = ? AND timestamp >= ? 
+            GROUP BY user_id 
+            ORDER BY count DESC 
+            LIMIT 10
+        """, (chat_id, since))
+        results = cursor.fetchall()
+        cursor.execute("SELECT COUNT(*) FROM messages WHERE chat_id = ? AND timestamp >= ?", (chat_id, since))
+    total_result = cursor.fetchone()
+    total_messages = total_result[0] if total_result else 0
+    if not results:
+        await update.message.reply_text(f"{title}\n\nНемає повідомлень\\!", parse_mode='MarkdownV2')
         return
+    stats = f"*{title}*\n\n"
+    for i, (user_id, count) in enumerate(results, 1):
+        try:
+            user = await context.bot.get_chat(user_id)
+            user_link = await get_user_link(user, chat_id)
+            stats += f"{i}\\. {user_link} — \\{count}\n"
+        except BadRequest:
+            stats += f"{i}\\. \\[Користувач видалений\\] — \\{count} повідомлень\n"
+    stats += f"\nВсього повідомлень\\: \\{total_messages}"
+    await update.message.reply_text(stats, parse_mode='MarkdownV2', disable_web_page_preview=True)
 
-    if balance < upgrade["cost"]:
-        await update.message.reply_text(f"❌ Недостатньо цикирок! Потрібно: {upgrade['cost']}, у вас: {balance}")
-        return
+@safe_message
+@with_db
+async def track_messages(update: Update, context, cursor):
+    if update.message.chat.type in ['group', 'supergroup']:
+        user_id = update.message.from_user.id
+        chat_id = update.message.chat.id
+        timestamp = datetime.now(UTC).strftime('%Y-%m-%d %H:%M:%S')
+        cursor.execute('INSERT INTO messages (user_id, chat_id, timestamp) VALUES (?, ?, ?)', (user_id, chat_id, timestamp))
+        cursor.connection.commit()
 
-    cursor.execute(f"UPDATE cikirkas SET cikirkas = cikirkas - ?, {upgrade['field']} = {upgrade['field']} + 1 WHERE user_id = ?",
-                   (upgrade["cost"], user_id))
-    if not result:
-        cursor.execute(f"INSERT INTO cikirkas (user_id, cikirkas, {upgrade['field']}) VALUES (?, ?, 1)",
-                       (user_id, -upgrade["cost"]))
-    cursor.connection.commit()
-    await update.message.reply_text(f"✅ Ви придбали '{item}' за {upgrade['cost']} цикирок! Новий баланс: {balance - upgrade['cost']} цикирок.")
+@with_db
+async def button_handler(update: Update, context, cursor):
+    query = update.callback_query
+    await query.answer()
+    user_id = query.from_user.id
+    choice = query.data
+    await buy_upgrade(user_id, choice, cursor, context, query.message.chat.id, query.message.message_id)
 
 async def parse_target(update: Update, context, return_args=False):
     args = context.args; reason = "Без причини"; target = update.message.reply_to_message.from_user.id if update.message.reply_to_message else None
@@ -443,10 +578,12 @@ command_map = {
     'унбан': cmd_unban, 'анбан': cmd_unban, 'варн': cmd_warn, '-варн': cmd_warn, 'унварн': cmd_unwarn, 'анварн': cmd_unwarn, 'допомога': cmd_help, 'правила': cmd_rules,
     '+правила': cmd_setrules, 'кік': cmd_kick, 'мут': cmd_mute, 'анмут': cmd_unmute, 'унмут': cmd_unmute,
     '+нік': cmd_set_nickname, '-нік': cmd_remove_nickname, 'нік': cmd_show_nickname,
-    'спроба': cmd_try, 'цикирки': cmd_cikirkas, 'магазин': cmd_shop, 'купити': cmd_buy
+    'спроба': cmd_try, 'цикирки': cmd_cikirkas, 'магазин': cmd_shop, 'купити': cmd_buy, 'рейтинг': cmd_leaderboard,
+    'стата': cmd_stats
 }
 
 async def handle_text(update: Update, context):
+    await track_messages(update, context)
     words = update.message.text.strip().split()
     if words and words[0] in command_map: 
         context.args = words[1:]
@@ -463,8 +600,9 @@ def run_bot():
         CommandHandler('setrules', cmd_setrules), CommandHandler('setwelcome', cmd_setwelcome),
         CommandHandler('warn', cmd_warn), CommandHandler('ban', cmd_ban), CommandHandler('kick', cmd_kick), CommandHandler('mute', cmd_mute),
         CommandHandler('unmute', cmd_unmute), CommandHandler('unban', cmd_unban), CommandHandler('unwarn', cmd_unwarn),
-        CommandHandler('try', cmd_try), CommandHandler('cikirkas', cmd_cikirkas), CommandHandler('shop', cmd_shop), CommandHandler('buy', cmd_buy),
-        MessageHandler(filters.StatusUpdate.NEW_CHAT_MEMBERS, welcome_message), MessageHandler(filters.TEXT & ~filters.COMMAND, handle_text)
+        CommandHandler('try', cmd_try), CommandHandler('cikirkas', cmd_cikirkas), CommandHandler('shop', cmd_shop), CommandHandler('buy', cmd_buy), CommandHandler('leaderboard', cmd_leaderboard), CommandHandler('stats', cmd_stats),
+        MessageHandler(filters.StatusUpdate.NEW_CHAT_MEMBERS, welcome_message), MessageHandler(filters.TEXT & ~filters.COMMAND, handle_text),
+        CallbackQueryHandler(button_handler)
     ])
     bot_app.add_error_handler(error_handler)
     bot_app.run_polling()
