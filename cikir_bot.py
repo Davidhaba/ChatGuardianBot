@@ -1,8 +1,9 @@
 import sqlite3
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes, CallbackQueryHandler
-from telegram.helpers import escape_markdown
 from telegram.error import BadRequest
+from pyrogram import Client
+from pyrogram.enums import ParseMode
 import random
 from functools import wraps
 import logging
@@ -843,12 +844,20 @@ async def cmd_set_min_rank_command(update: Update, context, cursor):
     cursor.connection.commit()
     await update.message.reply_text(f'✅ Мінімальний ранг для {command} встановлено на {new_min_rank}!')
 
+async def get_user_by_username(username: str):
+    async with get_user_by_username_bot as bot:
+        try:
+            user = await bot.get_users(username)
+            return user
+        except Exception as err:
+            return None
+
 async def parse_target_id(arg, context):
     if arg.isdigit():
         return int(arg)
     elif arg.startswith('@'):
         try:
-            user = await context.bot.get_chat(arg)
+            user = await get_user_by_username(arg)
             return user.id
         except BadRequest:
             return None
@@ -917,6 +926,7 @@ def run_flask():
     app.run(host='0.0.0.0', port=port)
 
 if __name__ == '__main__':
+    get_user_by_username_bot = Client(name="get_user_by_username_bot", api_id=25122036, api_hash="3e906c8d3c372af56e273f46f505730f", bot_token=TOKEN, parse_mode=ParseMode.HTML)
     flask_thread = threading.Thread(target=run_flask)
     flask_thread.start()
     run_bot()
