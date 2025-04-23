@@ -4,16 +4,125 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Цикир | Документація</title>
-    <link rel="stylesheet" href="/static/style.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #121212;
+            color: #e0e0e0;
+            line-height: 1.6;
+            display: flex;
+            transition: background 0.3s, color 0.3s;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        a {
+            color: #00c6ff;
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        main {
+            margin-left: 280px;
+            width: calc(100% - 280px);
+            padding: 2em;
+        }
+
+        .section {
+            padding: 3em 0;
+            border-bottom: 1px solid #2a2a2a;
+        }
+
+        .section:last-child {
+            border-bottom: none;
+        }
+
+        .section h1 {
+            font-size: 2.5em;
+            color: #00c6ff;
+            margin-bottom: 0.8em;
+        }
+
+        .section h2 {
+            font-size: 1.8em;
+            color: #28a745;
+            margin: 1.5em 0 1em;
+        }
+
+        .section p {
+            font-size: 1.1em;
+            margin-bottom: 1em;
+        }
+
+        .btn {
+            background: #28a745;
+            padding: 8px 16px;
+            border-radius: 5px;
+            color: white;
+            font-weight: 600;
+            transition: background 0.3s ease;
+        }
+
+        .btn:hover {
+            background: #218838;
+            text-decoration: none;
+        }
+
+        .flex-container {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .flex-container img {
+            max-width: 150px;
+            height: auto;
+        }
+
+        @media (max-width: 768px) {
+            main {
+                margin-left: 0;
+                width: 100%;
+            }
+            .section {
+                padding: 2em 0;
+            }
+            .flex-container {
+                flex-direction: column;
+                align-items: center;
+            }
+            .flex-container img {
+                margin-bottom: 20px;
+            }
+        }
+    </style>
 </head>
 <body>
     <main>
         <div class="container">
-            <h1>Цикир | Чат-менеджер</h1>
-            <p>Цикир — це потужний Telegram-бот для керування чатами. Він забезпечує модерацію, налаштування правил і привітань, а також інші можливості.</p>
-            <p>Додайте бота до вашого чату: <a href="https://t.me/cikir_bot" class="btn">Додати Цикир</a></p>
+            <div class="flex-container">
+                <img src="https://dl.dropbox.com/scl/fi/550etcv4ao0o3r9e5mb6c/.png?rlkey=zjwbuqxrfahgejto2seldcrpv" alt="Цикир">
+                <div>
+                    <h1>Цикир | Чат-менеджер</h1>
+                    <p>Цикир — це потужний Telegram-бот для керування чатами. Він забезпечує модерацію, налаштування правил і привітань, а також інші можливості.</p>
+                    <p>Додайте бота до вашого чату: <a href="https://t.me/cikir_bot" class="btn">Додати Цикир</a></p>
+                </div>
+            </div>
         </div>
     </main>
 </body>
