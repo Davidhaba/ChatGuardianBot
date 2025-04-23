@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="uk">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -12,118 +13,114 @@
             padding: 0;
             box-sizing: border-box;
         }
-
         body {
             font-family: 'Inter', sans-serif;
             background: #121212;
             color: #e0e0e0;
             line-height: 1.6;
             display: flex;
-            transition: background 0.3s, color 0.3s;
+            background-image: url('/bot logo/logo.jpg');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            position: relative;
         }
 
+        main {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(40px);
+            padding: 20px;
+            z-index: -1;
+        }
         .container {
             width: 90%;
             max-width: 900px;
             margin: 0 auto;
+            background: rgba(41, 41, 41, 0.5);
+            padding: 40px;
+            border-radius: 20px;
+            border: 1px solid grey;
         }
-
-        a {
-            color: #00c6ff;
-            text-decoration: none;
-        }
-
-        a:hover {
-            text-decoration: underline;
-        }
-
-        main {
-            margin-left: 280px;
-            width: calc(100% - 280px);
-            padding: 2em;
-        }
-
-        .section {
-            padding: 3em 0;
-            border-bottom: 1px solid #2a2a2a;
-        }
-
-        .section:last-child {
-            border-bottom: none;
-        }
-
-        .section h1 {
-            font-size: 2.5em;
-            color: #00c6ff;
-            margin-bottom: 0.8em;
-        }
-
-        .section h2 {
-            font-size: 1.8em;
-            color: #28a745;
-            margin: 1.5em 0 1em;
-        }
-
-        .section p {
-            font-size: 1.1em;
-            margin-bottom: 1em;
-        }
-
-        .btn {
-            background: #28a745;
-            padding: 8px 16px;
-            border-radius: 5px;
-            color: white;
-            font-weight: 600;
-            transition: background 0.3s ease;
-        }
-
-        .btn:hover {
-            background: #218838;
-            text-decoration: none;
-        }
-
         .flex-container {
             display: flex;
             align-items: center;
-            gap: 20px;
         }
-
         .flex-container img {
+            margin: 0 40px 0 0;
             max-width: 150px;
             height: auto;
+            border-radius: 50%;
+        }
+
+        label {
+            color: rgba(192, 192, 192, 0.7);
+        }
+        p {
+            margin: 15px 0 30px;
+        }
+
+        .btn {
+            background: #00449c;
+            padding: 13px 27px;
+            margin-top: 15px;
+            border-radius: 20px;
+            color: white;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            text-decoration: none;
+        }
+        .btn:hover {
+            background: #003b88;
+            text-decoration: none;
+        }
+        .btn:active {
+            transform: scale(0.9);
+        }
+        .bgwh {
+            background: rgba(102, 108, 141, 0.5);
+        }
+        .bgwh:hover {
+            background: rgba(80, 84, 112, 0.5);
         }
 
         @media (max-width: 768px) {
-            main {
-                margin-left: 0;
-                width: 100%;
-            }
-            .section {
-                padding: 2em 0;
+            .btn {
+                display: flex;
+                justify-content: center;
             }
             .flex-container {
                 flex-direction: column;
                 align-items: center;
+                text-align: center;
             }
             .flex-container img {
-                margin-bottom: 20px;
+                margin: 0 0 20px 0;
             }
         }
     </style>
 </head>
+
 <body>
     <main>
         <div class="container">
             <div class="flex-container">
-                <img src="https://dl.dropbox.com/scl/fi/550etcv4ao0o3r9e5mb6c/.png?rlkey=zjwbuqxrfahgejto2seldcrpv" alt="Цикир">
+                <img src="/bot logo/logo.jpg">
                 <div>
-                    <h1>Цикир | Чат-менеджер</h1>
-                    <p>Цикир — це потужний Telegram-бот для керування чатами. Він забезпечує модерацію, налаштування правил і привітань, а також інші можливості.</p>
-                    <p>Додайте бота до вашого чату: <a href="https://t.me/cikir_bot" class="btn">Додати Цикир</a></p>
-                </div>
+                    <h1 id="user-name">Цикир | Чат-менеджер</h1>
+                    <label>@cikir_bot</label>
+                    <p id="user-description">Цикир — це потужний Telegram-бот для керування чатами. Він забезпечує модерацію, налаштування, а також інші можливості.</p>
+                        <a href="tg://resolve?domain=cikir_bot" class="btn">Відкрити в Telegram</a>
+                        <a href="https://t.me/cikir_bot" class="btn bgwh">Відкрити в Web</a>
+                    </div>
             </div>
         </div>
     </main>
+
 </body>
+
 </html>
